@@ -1,0 +1,41 @@
+service: autocomplete
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  apiName: ${self:service}-${self:provider.stage}
+  memorySize: 1024
+  timeout: 30
+  tracing:
+    lambda: true
+  environment:
+    GEO_USR: ${file(./env/config.${self:provider.stage}.json):GEO_USR}
+  logs:
+    restApi:
+      level: 'ERROR'
+      fullExecutionData: false
+  logRetentionInDays: 14
+
+plugins:
+  - serverless-plugin-common-excludes
+  - serverless-plugin-include-dependencies
+  - serverless-offline
+
+package:
+  excludeDevDependencies: false
+
+functions:
+  app:
+    handler: handler.generic
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors: true
+      - http:
+          path: /{proxy+}
+          method: GET
+          cors: true
